@@ -1,0 +1,460 @@
+---
+title: "DBSCAN_Dist"
+format: html
+editor: visual
+---
+
+## DBSCAN - Datos Distribucionales
+
+Moisés Monge Cordonero
+
+```{r}
+
+library("RSDA")
+library(tidyverse)
+library(plotrix)
+library(readxl)
+library(readr)
+library(fpc)
+
+source("RcppExports.R")
+
+
+
+```
+
+## Distancia de Mallows
+
+```{r}
+
+#Función de inversa de cuantiles
+inv_quantile <- function(x, prob = 0.1){
+    
+    breaks <- x$breaks
+    props <- x$props 
+
+    if(prob != 1){
+        
+        w_i <- c(0, cumsum(props))
+        idx <- which(prob < w_i)[1]
+        idx <- idx - 1
+        w_l <- w_i[idx]
+        w_r <- w_i[idx + 1]
+
+        z_l <- breaks[idx]
+        z_r <- breaks[idx + 1]
+
+        z_l + (prob - w_l)/(w_r - w_l)*(z_r - z_l)
+    }else{
+        max(breaks)
+    }
+    
+
+}
+
+#Histogramas uniformes
+uniform_histogram <- function(x, length_quantiles = 0.1, props = NULL){
+
+    if(is.null(props)){
+        w <- seq(0, 1, length_quantiles)
+        props <- rep(length_quantiles, length(w)-1)
+    }else{
+        w <- cumsum(props)
+    }
+    
+
+    breaks <- inv_quantile(x, w)
+
+    out <- list(
+        breaks = breaks, 
+        props = props
+    )
+
+    vctrs::new_vctr(list(out), class = "symbolic_histogram")
+    
+}
+
+
+
+#Función distancia de Mallows
+d_mallows <- function(x, y){
+    breaks_x <- x$breaks
+    breaks_y <- y$breaks
+    length_x <- length(breaks_x)-1
+    length_y <- length(breaks_y)-1
+
+    if(length_x != length_y) stop(glue::glue("Different number of bins, x has {length_x} while y has {length_y}"))
+
+    props_x <- x$props
+    props_y <- y$props
+
+    if(!identical(props_x, props_y)) stop(glue::glue("Different proportions, x has {props_x} while y has {props_y}"))
+
+    centers_x <- (breaks_x[-length(breaks_x)] + breaks_x[-1])/2
+
+    
+
+    centers_y <- (breaks_y[-length(breaks_y)] + breaks_y[-1])/2
+
+    ranges_x <- (-breaks_x[-length(breaks_x)] + breaks_x[-1])
+
+
+    ranges_y <- (-breaks_y[-length(breaks_y)] + breaks_y[-1])
+
+    
+    sum_centers <- props_x*(centers_x-centers_y)^2
+
+    sum_ranges <- props_x*1/3*(ranges_x-ranges_y)^2
+
+    return(sqrt(sum(sum_centers) + sum(sum_ranges)))
+
+}
+
+
+```
+
+Prueba Datos Cardiológicos
+
+```{r}
+
+pulso_cardiaco = c(
+    vctrs::new_vctr(list(list(breaks = c(44,60,68), props = c(0.8, 0.2))), class = "symbolic_histogram"), 
+    vctrs::new_vctr(list(list(breaks = c(60,70,72), props = c(0.5, 0.5))), class = "symbolic_histogram"),
+    vctrs::new_vctr(list(list(breaks = c(56,80,90), props = c(0.6, 0.4))), class = "symbolic_histogram"),
+    vctrs::new_vctr(list(list(breaks = c(70,75,112), props = c(0.4, 0.6))), class = "symbolic_histogram"),
+    vctrs::new_vctr(list(list(breaks = c(54,56,72), props = c(0.2, 0.8))), class = "symbolic_histogram"),
+    vctrs::new_vctr(list(list(breaks = c(70,80,100), props = c(0.5, 0.5))), class = "symbolic_histogram"),
+    vctrs::new_vctr(list(list(breaks = c(63,73,75), props = c(0.4, 0.6))), class = "symbolic_histogram"),
+    vctrs::new_vctr(list(list(breaks = c(72,79,100), props = c(0.5, 0.5))), class = "symbolic_histogram"),
+    vctrs::new_vctr(list(list(breaks = c(76,80,98), props = c(0.2, 0.8))), class = "symbolic_histogram"),
+    vctrs::new_vctr(list(list(breaks = c(86,94,96), props = c(0.8, 0.2))), class = "symbolic_histogram"),
+    vctrs::new_vctr(list(list(breaks = c(86,89,89), props = c(0.6, 0.4))), class = "symbolic_histogram")
+    )
+
+presion_sistolica <- c(
+    vctrs::new_vctr(list(list(breaks = c(90,95,100), props = c(0.2, 0.8))), class = "symbolic_histogram"), 
+    vctrs::new_vctr(list(list(breaks = c(90,110,110), props = c(0.4, 0.6))), class = "symbolic_histogram"),
+    vctrs::new_vctr(list(list(breaks = c(140,160,180), props = c(0.5, 0.5))), class = "symbolic_histogram"),
+    vctrs::new_vctr(list(list(breaks = c(110,120,142), props = c(0.2, 0.8))), class = "symbolic_histogram"),
+    vctrs::new_vctr(list(list(breaks = c(90,98,100), props = c(0.6, 0.4))), class = "symbolic_histogram"),
+    vctrs::new_vctr(list(list(breaks = c(130,150,160), props = c(0.4, 0.6))), class = "symbolic_histogram"),
+    vctrs::new_vctr(list(list(breaks = c(140,145,150), props = c(0.2, 0.8))), class = "symbolic_histogram"),
+    vctrs::new_vctr(list(list(breaks = c(130,140,160), props = c(0.4, 0.8))), class = "symbolic_histogram"),
+    vctrs::new_vctr(list(list(breaks = c(110,160,190), props = c(0.5, 0.5))), class = "symbolic_histogram"),
+    vctrs::new_vctr(list(list(breaks = c(138,142,180), props = c(0.5, 0.5))), class = "symbolic_histogram"),
+    vctrs::new_vctr(list(list(breaks = c(110,135,150), props = c(0.2, 0.8))), class = "symbolic_histogram")
+    )
+
+presion_diastolica <- c(
+    vctrs::new_vctr(list(list(breaks = c(50,60,70), props = c(0.4, 0.6))), class = "symbolic_histogram"), 
+    vctrs::new_vctr(list(list(breaks = c(70,80,90), props = c(0.2, 0.8))), class = "symbolic_histogram"),
+    vctrs::new_vctr(list(list(breaks = c(90,92,100), props = c(0.5, 0.5))), class = "symbolic_histogram"),
+    vctrs::new_vctr(list(list(breaks = c(80,85,108), props = c(0.6, 0.4))), class = "symbolic_histogram"),
+    vctrs::new_vctr(list(list(breaks = c(50,63,70), props = c(0.4, 0.6))), class = "symbolic_histogram"),
+    vctrs::new_vctr(list(list(breaks = c(80,90,100), props = c(0.5, 0.5))), class = "symbolic_histogram"),
+    vctrs::new_vctr(list(list(breaks = c(60,80,100), props = c(0.2, 0.8))), class = "symbolic_histogram"),
+    vctrs::new_vctr(list(list(breaks = c(76,85,90), props = c(0.5, 0.5))), class = "symbolic_histogram"),
+    vctrs::new_vctr(list(list(breaks = c(70,100,110), props = c(0.4, 0.6))), class = "symbolic_histogram"),
+    vctrs::new_vctr(list(list(breaks = c(90,100,110), props = c(0.4, 0.6))), class = "symbolic_histogram"),
+    vctrs::new_vctr(list(list(breaks = c(78,88,100), props = c(0.2, 0.8))), class = "symbolic_histogram")
+    )
+df_cardiological_hist <- data.frame(
+    individuo = c(1:11)
+)
+
+
+```
+
+```{r}
+
+df_cardiological_hist$pulso_cardiaco <- pulso_cardiaco
+df_cardiological_hist$presion_sistolica <- presion_sistolica
+df_cardiological_hist$presion_diastolica <- presion_diastolica
+
+```
+
+Funcion Matriz de Distancias de Mallows
+
+```{r}
+
+dist_hist = function(x){
+  
+  n <- nrow(x)
+  p <- ncol(x)
+  
+  distance_matrix <- matrix(0, n, n)
+  
+  for (i in 1:n) {
+  for (j in 1:n) {
+    
+    if(j>i){
+      
+      distance_sum = 0
+      for(h in 1:p){
+        
+        distance = d_mallows(x[[i,h]],x[[j,h]])
+        distance_sum = distance_sum + distance
+        
+      }
+        
+     distance_matrix[i, j] <- distance_sum
+    }
+    
+  }
+  }
+  
+  distance_matrix = distance_matrix + t(distance_matrix)
+  
+  return(distance_matrix)
+  
+}
+  
+```
+
+Prueba datos cardiologicos
+
+```{r,warning=FALSE}
+
+df_cardiological_hist <- df_cardiological_hist %>%
+    mutate(individuo = as.character(individuo)) %>%
+    group_by(individuo) %>%
+    mutate(
+        pulso_cardiaco = uniform_histogram(pulso_cardiaco,length_quantiles = 0.1), 
+        presion_sistolica = uniform_histogram(presion_sistolica,length_quantiles = 0.1), 
+        presion_diastolica = uniform_histogram(presion_diastolica,length_quantiles = 0.1)
+    ) %>%
+    ungroup()
+
+df_cardiological_hist = df_cardiological_hist[-1]
+
+```
+
+```{r}
+
+prueba = dist_hist(df_cardiological_hist)
+
+dist_obj = as.dist(prueba)
+
+dist_obj
+
+```
+
+DBSCAN Datos Meteorologicos USA
+
+```{r}
+
+drd964 = read.csv2("drd964_2.csv",sep = ",")
+
+drd964$State = as.character(drd964$State)
+drd964[, 2:13] <- sapply(drd964[, 2:13], as.numeric)
+
+States = drd964 %>% distinct(State)
+
+drd964_sym <- classic.to.sym(
+  x = drd964,
+  concept = State,
+  January = sym.histogram(January,
+                              breaks = pretty(drd964$January, 6)),
+  February = sym.histogram(February,
+                              breaks = pretty(drd964$February, 6)),
+  March = sym.histogram(March,
+                              breaks = pretty(drd964$March, 6)),
+  April = sym.histogram(April,
+                              breaks = pretty(drd964$April, 6)),
+  May = sym.histogram(May,
+                              breaks = pretty(drd964$May, 6)),
+  June = sym.histogram(June,
+                              breaks = pretty(drd964$June, 6)),
+  July = sym.histogram(July,
+                              breaks = pretty(drd964$July, 6)),
+  August = sym.histogram(August,
+                              breaks = pretty(drd964$August, 6)),
+  September = sym.histogram(September,
+                              breaks = pretty(drd964$September, 6)),
+  October = sym.histogram(October,
+                              breaks = pretty(drd964$October, 6)),
+  November = sym.histogram(November,
+                              breaks = pretty(drd964$November, 6)),
+  December = sym.histogram(December,
+                              breaks = pretty(drd964$December, 6))
+  )
+
+
+
+States2 = attr(drd964_sym,"concept")
+
+drd964_sym_state <- data.frame(States2,drd964_sym)
+
+plot(drd964_sym[1:5,1:5])
+
+```
+
+```{r,warning=FALSE}
+
+#Uniformar histogramas
+drd964_sym_state <- drd964_sym_state %>%
+    mutate(States2 = as.character(States2)) %>%
+    group_by(States2) %>%mutate(
+        January = uniform_histogram(January,length_quantiles = 0.1), 
+        February = uniform_histogram(February,length_quantiles = 0.1), 
+        March = uniform_histogram(March,length_quantiles = 0.1),
+        April = uniform_histogram(April,length_quantiles = 0.1),
+        May = uniform_histogram(May,length_quantiles = 0.1),
+        June = uniform_histogram(June,length_quantiles = 0.1),
+        July = uniform_histogram(July,length_quantiles = 0.1),
+        August = uniform_histogram(August,length_quantiles = 0.1),
+        September = uniform_histogram(September,length_quantiles = 0.1),
+        October = uniform_histogram(October,length_quantiles = 0.1),
+        November = uniform_histogram(November,length_quantiles = 0.1),
+        December = uniform_histogram(December,length_quantiles = 0.1)
+    ) %>% ungroup()
+
+```
+
+DBSCAN utilizando matriz de distancias de Mallows
+
+```{r}
+
+#Estimación de matriz de distancias de histogramas y dbscan
+
+drd964_sym_state = drd964_sym_state[-1]
+
+
+drd964_dist = dist_hist(drd964_sym_state)
+
+
+drd964_dist = as.dist(drd964_dist)
+
+
+meteo_dbscan = fpc::dbscan(drd964_dist,eps=35,MinPts = 5,method="dist")
+
+meteo_dbscan
+
+clusters_meteo = data.frame(States2,meteo_dbscan$cluster)
+
+
+write.csv(clusters_meteo,"clusters_meteo3_2.csv")
+
+
+```
+
+## Datos Climáticos China
+
+Carga de datos y tratamiento inicial
+
+```{r,warning=FALSE}
+
+
+ndp039 <- read_table("ndp039.f14.txt", 
+    col_names = FALSE)
+
+ndp039 = ndp039[,c(1,3,4,5,8,11,14)]
+
+ndp039_Jan = ndp039 %>% filter(X3 == 1)
+ndp039_Jul = ndp039 %>% filter(X3 == 7)
+
+ndp039_Jan = ndp039_Jan[-2]
+ndp039_Jul = ndp039_Jul[-2]
+
+
+```
+
+```{r}
+
+ndp039_Jan$X1 = as.character(ndp039_Jan$X1)
+ndp039_Jan[, 2:6] <- sapply(ndp039_Jan[, 2:6], as.numeric)
+
+ndp039_Jul$X1 = as.character(ndp039_Jul$X1)
+ndp039_Jul[, 2:6] <- sapply(ndp039_Jul[, 2:6], as.numeric)
+
+ndp039_Jan = na.omit(ndp039_Jan)
+ndp039_Jul = na.omit(ndp039_Jul)
+
+#transformación a objeto simbólico
+
+ndp039_Jan_sym <- classic.to.sym(
+  x = ndp039_Jan,
+  concept = X1,
+  X4 = sym.histogram(X4,
+                              breaks = pretty(ndp039_Jan$X4, 4)),
+  X5 = sym.histogram(X5,
+                              breaks = pretty(ndp039_Jan$X5, 4)),
+  X8 = sym.histogram(X8,
+                              breaks = pretty(ndp039_Jan$X8, 4)),
+  X11 = sym.histogram(X11,
+                              breaks = pretty(ndp039_Jan$X11, 4)),
+  X14 = sym.histogram(X14,
+                              breaks = pretty(ndp039_Jan$X14, 4))
+  )
+
+plot(ndp039_Jan_sym[1:5,])
+
+ndp039_Jul_sym <- classic.to.sym(
+  x = ndp039_Jul,
+  concept = X1,
+  X4 = sym.histogram(X4,
+                              breaks = pretty(ndp039_Jul$X4, 4)),
+  X5 = sym.histogram(X5,
+                              breaks = pretty(ndp039_Jul$X5, 4)),
+  X8 = sym.histogram(X8,
+                              breaks = pretty(ndp039_Jul$X8, 4)),
+  X11 = sym.histogram(X11,
+                              breaks = pretty(ndp039_Jul$X11, 4)),
+  X14 = sym.histogram(X14,
+                              breaks = pretty(ndp039_Jul$X14, 4))
+  )
+
+
+ndp039_sym = data.frame(ndp039_Jan_sym,ndp039_Jul_sym)
+
+```
+
+```{r,warning=FALSE}
+
+Stations = attr(ndp039_Jul_sym,"concept")
+
+ndp039_sym_stations <- data.frame(Stations,ndp039_sym)
+
+#uniformar los histogramas
+
+ndp039_sym_stations <- ndp039_sym_stations %>%
+    mutate(Stations = as.character(Stations)) %>%
+    group_by(Stations) %>%mutate(
+        X4 = uniform_histogram(X4,length_quantiles = 0.1), 
+        X5 = uniform_histogram(X5,length_quantiles = 0.1), 
+        X8 = uniform_histogram(X8,length_quantiles = 0.1),
+        X11 = uniform_histogram(X11,length_quantiles = 0.1),
+        X14 = uniform_histogram(X14,length_quantiles = 0.1),
+        X4.1 = uniform_histogram(X4.1,length_quantiles = 0.1),
+        X5.1 = uniform_histogram(X5.1,length_quantiles = 0.1),
+        X8.1 = uniform_histogram(X8.1,length_quantiles = 0.1),
+        X11.1 = uniform_histogram(X11.1,length_quantiles = 0.1),
+        X14.1 = uniform_histogram(X14.1,length_quantiles = 0.1)
+    ) %>% ungroup()
+
+ndp039_sym_stations = ndp039_sym_stations[-1]
+
+#estimación de matriz de distancias
+
+ndp039_dist = dist_hist(ndp039_sym_stations)
+
+ndp039_dist = as.dist(ndp039_dist)
+
+
+```
+
+DBSCAN usando la matriz de distancias de Mallows
+
+```{r}
+
+
+clima_dbscan = fpc::dbscan(ndp039_dist,eps=17000,MinPts = 14,method="dist")
+
+clima_dbscan
+
+clusters_clima = data.frame(Stations,clima_dbscan$cluster)
+
+
+write.csv(clusters_clima,"clusters_clima2.csv")
+
+```

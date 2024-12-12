@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.3.340">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>DBSCAN_Dist</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="DBSCAN_Clust - V2_files/libs/clipboard/clipboard.min.js"></script>
+<script src="DBSCAN_Clust - V2_files/libs/quarto-html/quarto.js"></script>
+<script src="DBSCAN_Clust - V2_files/libs/quarto-html/popper.min.js"></script>
+<script src="DBSCAN_Clust - V2_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="DBSCAN_Clust - V2_files/libs/quarto-html/anchor.min.js"></script>
+<link href="DBSCAN_Clust - V2_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="DBSCAN_Clust - V2_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="DBSCAN_Clust - V2_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="DBSCAN_Clust - V2_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="DBSCAN_Clust - V2_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+
+
+</head>
+
+<body class="fullcontent">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">DBSCAN_Dist</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+</header>
+
+<section id="dbscan---datos-distribucionales" class="level2">
+<h2 class="anchored" data-anchor-id="dbscan---datos-distribucionales">DBSCAN - Datos Distribucionales</h2>
+<p>Moisés Monge Cordonero</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(<span class="st">"RSDA"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code></code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>
+Attaching package: 'RSDA'</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>The following objects are masked from 'package:stats':
+
+    cor, sd, var</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>-- Attaching core tidyverse packages ------------------------ tidyverse 2.0.0 --
+v dplyr     1.1.2     v readr     2.1.4
+v forcats   1.0.0     v stringr   1.5.0
+v ggplot2   3.4.2     v tibble    3.2.1
+v lubridate 1.9.2     v tidyr     1.3.0
+v purrr     1.0.1     </code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>-- Conflicts ------------------------------------------ tidyverse_conflicts() --
+x dplyr::filter() masks stats::filter()
+x dplyr::lag()    masks stats::lag()
+i Use the conflicted package (&lt;http://conflicted.r-lib.org/&gt;) to force all conflicts to become errors</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(plotrix)</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(readxl)</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(readr)</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(fpc)</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(<span class="st">"RcppExports.R"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="distancia-de-mallows" class="level2">
+<h2 class="anchored" data-anchor-id="distancia-de-mallows">Distancia de Mallows</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Función de inversa de cuantiles</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>inv_quantile <span class="ot">&lt;-</span> <span class="cf">function</span>(x, <span class="at">prob =</span> <span class="fl">0.1</span>){</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>    breaks <span class="ot">&lt;-</span> x<span class="sc">$</span>breaks</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>    props <span class="ot">&lt;-</span> x<span class="sc">$</span>props </span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span>(prob <span class="sc">!=</span> <span class="dv">1</span>){</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>        w_i <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="fu">cumsum</span>(props))</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>        idx <span class="ot">&lt;-</span> <span class="fu">which</span>(prob <span class="sc">&lt;</span> w_i)[<span class="dv">1</span>]</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>        idx <span class="ot">&lt;-</span> idx <span class="sc">-</span> <span class="dv">1</span></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>        w_l <span class="ot">&lt;-</span> w_i[idx]</span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>        w_r <span class="ot">&lt;-</span> w_i[idx <span class="sc">+</span> <span class="dv">1</span>]</span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>        z_l <span class="ot">&lt;-</span> breaks[idx]</span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>        z_r <span class="ot">&lt;-</span> breaks[idx <span class="sc">+</span> <span class="dv">1</span>]</span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>        z_l <span class="sc">+</span> (prob <span class="sc">-</span> w_l)<span class="sc">/</span>(w_r <span class="sc">-</span> w_l)<span class="sc">*</span>(z_r <span class="sc">-</span> z_l)</span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>    }<span class="cf">else</span>{</span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>        <span class="fu">max</span>(breaks)</span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a><span class="co">#Histogramas uniformes</span></span>
+<span id="cb9-27"><a href="#cb9-27" aria-hidden="true" tabindex="-1"></a>uniform_histogram <span class="ot">&lt;-</span> <span class="cf">function</span>(x, <span class="at">length_quantiles =</span> <span class="fl">0.1</span>, <span class="at">props =</span> <span class="cn">NULL</span>){</span>
+<span id="cb9-28"><a href="#cb9-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-29"><a href="#cb9-29" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span>(<span class="fu">is.null</span>(props)){</span>
+<span id="cb9-30"><a href="#cb9-30" aria-hidden="true" tabindex="-1"></a>        w <span class="ot">&lt;-</span> <span class="fu">seq</span>(<span class="dv">0</span>, <span class="dv">1</span>, length_quantiles)</span>
+<span id="cb9-31"><a href="#cb9-31" aria-hidden="true" tabindex="-1"></a>        props <span class="ot">&lt;-</span> <span class="fu">rep</span>(length_quantiles, <span class="fu">length</span>(w)<span class="sc">-</span><span class="dv">1</span>)</span>
+<span id="cb9-32"><a href="#cb9-32" aria-hidden="true" tabindex="-1"></a>    }<span class="cf">else</span>{</span>
+<span id="cb9-33"><a href="#cb9-33" aria-hidden="true" tabindex="-1"></a>        w <span class="ot">&lt;-</span> <span class="fu">cumsum</span>(props)</span>
+<span id="cb9-34"><a href="#cb9-34" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb9-35"><a href="#cb9-35" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb9-36"><a href="#cb9-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-37"><a href="#cb9-37" aria-hidden="true" tabindex="-1"></a>    breaks <span class="ot">&lt;-</span> <span class="fu">inv_quantile</span>(x, w)</span>
+<span id="cb9-38"><a href="#cb9-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-39"><a href="#cb9-39" aria-hidden="true" tabindex="-1"></a>    out <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb9-40"><a href="#cb9-40" aria-hidden="true" tabindex="-1"></a>        <span class="at">breaks =</span> breaks, </span>
+<span id="cb9-41"><a href="#cb9-41" aria-hidden="true" tabindex="-1"></a>        <span class="at">props =</span> props</span>
+<span id="cb9-42"><a href="#cb9-42" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb9-43"><a href="#cb9-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-44"><a href="#cb9-44" aria-hidden="true" tabindex="-1"></a>    vctrs<span class="sc">::</span><span class="fu">new_vctr</span>(<span class="fu">list</span>(out), <span class="at">class =</span> <span class="st">"symbolic_histogram"</span>)</span>
+<span id="cb9-45"><a href="#cb9-45" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb9-46"><a href="#cb9-46" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb9-47"><a href="#cb9-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-48"><a href="#cb9-48" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-49"><a href="#cb9-49" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-50"><a href="#cb9-50" aria-hidden="true" tabindex="-1"></a><span class="co">#Función distancia de Mallows</span></span>
+<span id="cb9-51"><a href="#cb9-51" aria-hidden="true" tabindex="-1"></a>d_mallows <span class="ot">&lt;-</span> <span class="cf">function</span>(x, y){</span>
+<span id="cb9-52"><a href="#cb9-52" aria-hidden="true" tabindex="-1"></a>    breaks_x <span class="ot">&lt;-</span> x<span class="sc">$</span>breaks</span>
+<span id="cb9-53"><a href="#cb9-53" aria-hidden="true" tabindex="-1"></a>    breaks_y <span class="ot">&lt;-</span> y<span class="sc">$</span>breaks</span>
+<span id="cb9-54"><a href="#cb9-54" aria-hidden="true" tabindex="-1"></a>    length_x <span class="ot">&lt;-</span> <span class="fu">length</span>(breaks_x)<span class="sc">-</span><span class="dv">1</span></span>
+<span id="cb9-55"><a href="#cb9-55" aria-hidden="true" tabindex="-1"></a>    length_y <span class="ot">&lt;-</span> <span class="fu">length</span>(breaks_y)<span class="sc">-</span><span class="dv">1</span></span>
+<span id="cb9-56"><a href="#cb9-56" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-57"><a href="#cb9-57" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span>(length_x <span class="sc">!=</span> length_y) <span class="fu">stop</span>(glue<span class="sc">::</span><span class="fu">glue</span>(<span class="st">"Different number of bins, x has {length_x} while y has {length_y}"</span>))</span>
+<span id="cb9-58"><a href="#cb9-58" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-59"><a href="#cb9-59" aria-hidden="true" tabindex="-1"></a>    props_x <span class="ot">&lt;-</span> x<span class="sc">$</span>props</span>
+<span id="cb9-60"><a href="#cb9-60" aria-hidden="true" tabindex="-1"></a>    props_y <span class="ot">&lt;-</span> y<span class="sc">$</span>props</span>
+<span id="cb9-61"><a href="#cb9-61" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-62"><a href="#cb9-62" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span>(<span class="sc">!</span><span class="fu">identical</span>(props_x, props_y)) <span class="fu">stop</span>(glue<span class="sc">::</span><span class="fu">glue</span>(<span class="st">"Different proportions, x has {props_x} while y has {props_y}"</span>))</span>
+<span id="cb9-63"><a href="#cb9-63" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-64"><a href="#cb9-64" aria-hidden="true" tabindex="-1"></a>    centers_x <span class="ot">&lt;-</span> (breaks_x[<span class="sc">-</span><span class="fu">length</span>(breaks_x)] <span class="sc">+</span> breaks_x[<span class="sc">-</span><span class="dv">1</span>])<span class="sc">/</span><span class="dv">2</span></span>
+<span id="cb9-65"><a href="#cb9-65" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-66"><a href="#cb9-66" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb9-67"><a href="#cb9-67" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-68"><a href="#cb9-68" aria-hidden="true" tabindex="-1"></a>    centers_y <span class="ot">&lt;-</span> (breaks_y[<span class="sc">-</span><span class="fu">length</span>(breaks_y)] <span class="sc">+</span> breaks_y[<span class="sc">-</span><span class="dv">1</span>])<span class="sc">/</span><span class="dv">2</span></span>
+<span id="cb9-69"><a href="#cb9-69" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-70"><a href="#cb9-70" aria-hidden="true" tabindex="-1"></a>    ranges_x <span class="ot">&lt;-</span> (<span class="sc">-</span>breaks_x[<span class="sc">-</span><span class="fu">length</span>(breaks_x)] <span class="sc">+</span> breaks_x[<span class="sc">-</span><span class="dv">1</span>])</span>
+<span id="cb9-71"><a href="#cb9-71" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-72"><a href="#cb9-72" aria-hidden="true" tabindex="-1"></a>    ranges_y <span class="ot">&lt;-</span> (<span class="sc">-</span>breaks_y[<span class="sc">-</span><span class="fu">length</span>(breaks_y)] <span class="sc">+</span> breaks_y[<span class="sc">-</span><span class="dv">1</span>])</span>
+<span id="cb9-73"><a href="#cb9-73" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-74"><a href="#cb9-74" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb9-75"><a href="#cb9-75" aria-hidden="true" tabindex="-1"></a>    sum_centers <span class="ot">&lt;-</span> props_x<span class="sc">*</span>(centers_x<span class="sc">-</span>centers_y)<span class="sc">^</span><span class="dv">2</span></span>
+<span id="cb9-76"><a href="#cb9-76" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-77"><a href="#cb9-77" aria-hidden="true" tabindex="-1"></a>    sum_ranges <span class="ot">&lt;-</span> props_x<span class="sc">*</span><span class="dv">1</span><span class="sc">/</span><span class="dv">3</span><span class="sc">*</span>(ranges_x<span class="sc">-</span>ranges_y)<span class="sc">^</span><span class="dv">2</span></span>
+<span id="cb9-78"><a href="#cb9-78" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-79"><a href="#cb9-79" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(<span class="fu">sqrt</span>(<span class="fu">sum</span>(sum_centers) <span class="sc">+</span> <span class="fu">sum</span>(sum_ranges)))</span>
+<span id="cb9-80"><a href="#cb9-80" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-81"><a href="#cb9-81" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Prueba Datos Cardiológicos</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>pulso_cardiaco <span class="ot">=</span> <span class="fu">c</span>(</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    vctrs<span class="sc">::</span><span class="fu">new_vctr</span>(<span class="fu">list</span>(<span class="fu">list</span>(<span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">44</span>,<span class="dv">60</span>,<span class="dv">68</span>), <span class="at">props =</span> <span class="fu">c</span>(<span class="fl">0.8</span>, <span class="fl">0.2</span>))), <span class="at">class =</span> <span class="st">"symbolic_histogram"</span>), </span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    vctrs<span class="sc">::</span><span class="fu">new_vctr</span>(<span class="fu">list</span>(<span class="fu">list</span>(<span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">60</span>,<span class="dv">70</span>,<span class="dv">72</span>), <span class="at">props =</span> <span class="fu">c</span>(<span class="fl">0.5</span>, <span class="fl">0.5</span>))), <span class="at">class =</span> <span class="st">"symbolic_histogram"</span>),</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>    vctrs<span class="sc">::</span><span class="fu">new_vctr</span>(<span class="fu">list</span>(<span class="fu">list</span>(<span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">56</span>,<span class="dv">80</span>,<span class="dv">90</span>), <span class="at">props =</span> <span class="fu">c</span>(<span class="fl">0.6</span>, <span class="fl">0.4</span>))), <span class="at">class =</span> <span class="st">"symbolic_histogram"</span>),</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>    vctrs<span class="sc">::</span><span class="fu">new_vctr</span>(<span class="fu">list</span>(<span class="fu">list</span>(<span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">70</span>,<span class="dv">75</span>,<span class="dv">112</span>), <span class="at">props =</span> <span class="fu">c</span>(<span class="fl">0.4</span>, <span class="fl">0.6</span>))), <span class="at">class =</span> <span class="st">"symbolic_histogram"</span>),</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>    vctrs<span class="sc">::</span><span class="fu">new_vctr</span>(<span class="fu">list</span>(<span class="fu">list</span>(<span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">54</span>,<span class="dv">56</span>,<span class="dv">72</span>), <span class="at">props =</span> <span class="fu">c</span>(<span class="fl">0.2</span>, <span class="fl">0.8</span>))), <span class="at">class =</span> <span class="st">"symbolic_histogram"</span>),</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>    vctrs<span class="sc">::</span><span class="fu">new_vctr</span>(<span class="fu">list</span>(<span class="fu">list</span>(<span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">70</span>,<span class="dv">80</span>,<span class="dv">100</span>), <span class="at">props =</span> <span class="fu">c</span>(<span class="fl">0.5</span>, <span class="fl">0.5</span>))), <span class="at">class =</span> <span class="st">"symbolic_histogram"</span>),</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>    vctrs<span class="sc">::</span><span class="fu">new_vctr</span>(<span class="fu">list</span>(<span class="fu">list</span>(<span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">63</span>,<span class="dv">73</span>,<span class="dv">75</span>), <span class="at">props =</span> <span class="fu">c</span>(<span class="fl">0.4</span>, <span class="fl">0.6</span>))), <span class="at">class =</span> <span class="st">"symbolic_histogram"</span>),</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>    vctrs<span class="sc">::</span><span class="fu">new_vctr</span>(<span class="fu">list</span>(<span class="fu">list</span>(<span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">72</span>,<span class="dv">79</span>,<span class="dv">100</span>), <span class="at">props =</span> <span class="fu">c</span>(<span class="fl">0.5</span>, <span class="fl">0.5</span>))), <span class="at">class =</span> <span class="st">"symbolic_histogram"</span>),</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>    vctrs<span class="sc">::</span><span class="fu">new_vctr</span>(<span class="fu">list</span>(<span class="fu">list</span>(<span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">76</span>,<span class="dv">80</span>,<span class="dv">98</span>), <span class="at">props =</span> <span class="fu">c</span>(<span class="fl">0.2</span>, <span class="fl">0.8</span>))), <span class="at">class =</span> <span class="st">"symbolic_histogram"</span>),</span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>    vctrs<span class="sc">::</span><span class="fu">new_vctr</span>(<span class="fu">list</span>(<span class="fu">list</span>(<span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">86</span>,<span class="dv">94</span>,<span class="dv">96</span>), <span class="at">props =</span> <span class="fu">c</span>(<span class="fl">0.8</span>, <span class="fl">0.2</span>))), <span class="at">class =</span> <span class="st">"symbolic_histogram"</span>),</span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>    vctrs<span class="sc">::</span><span class="fu">new_vctr</span>(<span class="fu">list</span>(<span class="fu">list</span>(<span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">86</span>,<span class="dv">89</span>,<span class="dv">89</span>), <span class="at">props =</span> <span class="fu">c</span>(<span class="fl">0.6</span>, <span class="fl">0.4</span>))), <span class="at">class =</span> <span class="st">"symbolic_histogram"</span>)</span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>presion_sistolica <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>    vctrs<span class="sc">::</span><span class="fu">new_vctr</span>(<span class="fu">list</span>(<span class="fu">list</span>(<span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">90</span>,<span class="dv">95</span>,<span class="dv">100</span>), <span class="at">props =</span> <span class="fu">c</span>(<span class="fl">0.2</span>, <span class="fl">0.8</span>))), <span class="at">class =</span> <span class="st">"symbolic_histogram"</span>), </span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>    vctrs<span class="sc">::</span><span class="fu">new_vctr</span>(<span class="fu">list</span>(<span class="fu">list</span>(<span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">90</span>,<span class="dv">110</span>,<span class="dv">110</span>), <span class="at">props =</span> <span class="fu">c</span>(<span class="fl">0.4</span>, <span class="fl">0.6</span>))), <span class="at">class =</span> <span class="st">"symbolic_histogram"</span>),</span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>    vctrs<span class="sc">::</span><span class="fu">new_vctr</span>(<span class="fu">list</span>(<span class="fu">list</span>(<span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">140</span>,<span class="dv">160</span>,<span class="dv">180</span>), <span class="at">props =</span> <span class="fu">c</span>(<span class="fl">0.5</span>, <span class="fl">0.5</span>))), <span class="at">class =</span> <span class="st">"symbolic_histogram"</span>),</span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>    vctrs<span class="sc">::</span><span class="fu">new_vctr</span>(<span class="fu">list</span>(<span class="fu">list</span>(<span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">110</span>,<span class="dv">120</span>,<span class="dv">142</span>), <span class="at">props =</span> <span class="fu">c</span>(<span class="fl">0.2</span>, <span class="fl">0.8</span>))), <span class="at">class =</span> <span class="st">"symbolic_histogram"</span>),</span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>    vctrs<span class="sc">::</span><span class="fu">new_vctr</span>(<span class="fu">list</span>(<span class="fu">list</span>(<span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">90</span>,<span class="dv">98</span>,<span class="dv">100</span>), <span class="at">props =</span> <span class="fu">c</span>(<span class="fl">0.6</span>, <span class="fl">0.4</span>))), <span class="at">class =</span> <span class="st">"symbolic_histogram"</span>),</span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a>    vctrs<span class="sc">::</span><span class="fu">new_vctr</span>(<span class="fu">list</span>(<span class="fu">list</span>(<span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">130</span>,<span class="dv">150</span>,<span class="dv">160</span>), <span class="at">props =</span> <span class="fu">c</span>(<span class="fl">0.4</span>, <span class="fl">0.6</span>))), <span class="at">class =</span> <span class="st">"symbolic_histogram"</span>),</span>
+<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a>    vctrs<span class="sc">::</span><span class="fu">new_vctr</span>(<span class="fu">list</span>(<span class="fu">list</span>(<span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">140</span>,<span class="dv">145</span>,<span class="dv">150</span>), <span class="at">props =</span> <span class="fu">c</span>(<span class="fl">0.2</span>, <span class="fl">0.8</span>))), <span class="at">class =</span> <span class="st">"symbolic_histogram"</span>),</span>
+<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a>    vctrs<span class="sc">::</span><span class="fu">new_vctr</span>(<span class="fu">list</span>(<span class="fu">list</span>(<span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">130</span>,<span class="dv">140</span>,<span class="dv">160</span>), <span class="at">props =</span> <span class="fu">c</span>(<span class="fl">0.4</span>, <span class="fl">0.8</span>))), <span class="at">class =</span> <span class="st">"symbolic_histogram"</span>),</span>
+<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a>    vctrs<span class="sc">::</span><span class="fu">new_vctr</span>(<span class="fu">list</span>(<span class="fu">list</span>(<span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">110</span>,<span class="dv">160</span>,<span class="dv">190</span>), <span class="at">props =</span> <span class="fu">c</span>(<span class="fl">0.5</span>, <span class="fl">0.5</span>))), <span class="at">class =</span> <span class="st">"symbolic_histogram"</span>),</span>
+<span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a>    vctrs<span class="sc">::</span><span class="fu">new_vctr</span>(<span class="fu">list</span>(<span class="fu">list</span>(<span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">138</span>,<span class="dv">142</span>,<span class="dv">180</span>), <span class="at">props =</span> <span class="fu">c</span>(<span class="fl">0.5</span>, <span class="fl">0.5</span>))), <span class="at">class =</span> <span class="st">"symbolic_histogram"</span>),</span>
+<span id="cb10-26"><a href="#cb10-26" aria-hidden="true" tabindex="-1"></a>    vctrs<span class="sc">::</span><span class="fu">new_vctr</span>(<span class="fu">list</span>(<span class="fu">list</span>(<span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">110</span>,<span class="dv">135</span>,<span class="dv">150</span>), <span class="at">props =</span> <span class="fu">c</span>(<span class="fl">0.2</span>, <span class="fl">0.8</span>))), <span class="at">class =</span> <span class="st">"symbolic_histogram"</span>)</span>
+<span id="cb10-27"><a href="#cb10-27" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb10-28"><a href="#cb10-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-29"><a href="#cb10-29" aria-hidden="true" tabindex="-1"></a>presion_diastolica <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb10-30"><a href="#cb10-30" aria-hidden="true" tabindex="-1"></a>    vctrs<span class="sc">::</span><span class="fu">new_vctr</span>(<span class="fu">list</span>(<span class="fu">list</span>(<span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">50</span>,<span class="dv">60</span>,<span class="dv">70</span>), <span class="at">props =</span> <span class="fu">c</span>(<span class="fl">0.4</span>, <span class="fl">0.6</span>))), <span class="at">class =</span> <span class="st">"symbolic_histogram"</span>), </span>
+<span id="cb10-31"><a href="#cb10-31" aria-hidden="true" tabindex="-1"></a>    vctrs<span class="sc">::</span><span class="fu">new_vctr</span>(<span class="fu">list</span>(<span class="fu">list</span>(<span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">70</span>,<span class="dv">80</span>,<span class="dv">90</span>), <span class="at">props =</span> <span class="fu">c</span>(<span class="fl">0.2</span>, <span class="fl">0.8</span>))), <span class="at">class =</span> <span class="st">"symbolic_histogram"</span>),</span>
+<span id="cb10-32"><a href="#cb10-32" aria-hidden="true" tabindex="-1"></a>    vctrs<span class="sc">::</span><span class="fu">new_vctr</span>(<span class="fu">list</span>(<span class="fu">list</span>(<span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">90</span>,<span class="dv">92</span>,<span class="dv">100</span>), <span class="at">props =</span> <span class="fu">c</span>(<span class="fl">0.5</span>, <span class="fl">0.5</span>))), <span class="at">class =</span> <span class="st">"symbolic_histogram"</span>),</span>
+<span id="cb10-33"><a href="#cb10-33" aria-hidden="true" tabindex="-1"></a>    vctrs<span class="sc">::</span><span class="fu">new_vctr</span>(<span class="fu">list</span>(<span class="fu">list</span>(<span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">80</span>,<span class="dv">85</span>,<span class="dv">108</span>), <span class="at">props =</span> <span class="fu">c</span>(<span class="fl">0.6</span>, <span class="fl">0.4</span>))), <span class="at">class =</span> <span class="st">"symbolic_histogram"</span>),</span>
+<span id="cb10-34"><a href="#cb10-34" aria-hidden="true" tabindex="-1"></a>    vctrs<span class="sc">::</span><span class="fu">new_vctr</span>(<span class="fu">list</span>(<span class="fu">list</span>(<span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">50</span>,<span class="dv">63</span>,<span class="dv">70</span>), <span class="at">props =</span> <span class="fu">c</span>(<span class="fl">0.4</span>, <span class="fl">0.6</span>))), <span class="at">class =</span> <span class="st">"symbolic_histogram"</span>),</span>
+<span id="cb10-35"><a href="#cb10-35" aria-hidden="true" tabindex="-1"></a>    vctrs<span class="sc">::</span><span class="fu">new_vctr</span>(<span class="fu">list</span>(<span class="fu">list</span>(<span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">80</span>,<span class="dv">90</span>,<span class="dv">100</span>), <span class="at">props =</span> <span class="fu">c</span>(<span class="fl">0.5</span>, <span class="fl">0.5</span>))), <span class="at">class =</span> <span class="st">"symbolic_histogram"</span>),</span>
+<span id="cb10-36"><a href="#cb10-36" aria-hidden="true" tabindex="-1"></a>    vctrs<span class="sc">::</span><span class="fu">new_vctr</span>(<span class="fu">list</span>(<span class="fu">list</span>(<span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">60</span>,<span class="dv">80</span>,<span class="dv">100</span>), <span class="at">props =</span> <span class="fu">c</span>(<span class="fl">0.2</span>, <span class="fl">0.8</span>))), <span class="at">class =</span> <span class="st">"symbolic_histogram"</span>),</span>
+<span id="cb10-37"><a href="#cb10-37" aria-hidden="true" tabindex="-1"></a>    vctrs<span class="sc">::</span><span class="fu">new_vctr</span>(<span class="fu">list</span>(<span class="fu">list</span>(<span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">76</span>,<span class="dv">85</span>,<span class="dv">90</span>), <span class="at">props =</span> <span class="fu">c</span>(<span class="fl">0.5</span>, <span class="fl">0.5</span>))), <span class="at">class =</span> <span class="st">"symbolic_histogram"</span>),</span>
+<span id="cb10-38"><a href="#cb10-38" aria-hidden="true" tabindex="-1"></a>    vctrs<span class="sc">::</span><span class="fu">new_vctr</span>(<span class="fu">list</span>(<span class="fu">list</span>(<span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">70</span>,<span class="dv">100</span>,<span class="dv">110</span>), <span class="at">props =</span> <span class="fu">c</span>(<span class="fl">0.4</span>, <span class="fl">0.6</span>))), <span class="at">class =</span> <span class="st">"symbolic_histogram"</span>),</span>
+<span id="cb10-39"><a href="#cb10-39" aria-hidden="true" tabindex="-1"></a>    vctrs<span class="sc">::</span><span class="fu">new_vctr</span>(<span class="fu">list</span>(<span class="fu">list</span>(<span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">90</span>,<span class="dv">100</span>,<span class="dv">110</span>), <span class="at">props =</span> <span class="fu">c</span>(<span class="fl">0.4</span>, <span class="fl">0.6</span>))), <span class="at">class =</span> <span class="st">"symbolic_histogram"</span>),</span>
+<span id="cb10-40"><a href="#cb10-40" aria-hidden="true" tabindex="-1"></a>    vctrs<span class="sc">::</span><span class="fu">new_vctr</span>(<span class="fu">list</span>(<span class="fu">list</span>(<span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">78</span>,<span class="dv">88</span>,<span class="dv">100</span>), <span class="at">props =</span> <span class="fu">c</span>(<span class="fl">0.2</span>, <span class="fl">0.8</span>))), <span class="at">class =</span> <span class="st">"symbolic_histogram"</span>)</span>
+<span id="cb10-41"><a href="#cb10-41" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb10-42"><a href="#cb10-42" aria-hidden="true" tabindex="-1"></a>df_cardiological_hist <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb10-43"><a href="#cb10-43" aria-hidden="true" tabindex="-1"></a>    <span class="at">individuo =</span> <span class="fu">c</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">11</span>)</span>
+<span id="cb10-44"><a href="#cb10-44" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>df_cardiological_hist<span class="sc">$</span>pulso_cardiaco <span class="ot">&lt;-</span> pulso_cardiaco</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>df_cardiological_hist<span class="sc">$</span>presion_sistolica <span class="ot">&lt;-</span> presion_sistolica</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>df_cardiological_hist<span class="sc">$</span>presion_diastolica <span class="ot">&lt;-</span> presion_diastolica</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Funcion Matriz de Distancias de Mallows</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>dist_hist <span class="ot">=</span> <span class="cf">function</span>(x){</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>  n <span class="ot">&lt;-</span> <span class="fu">nrow</span>(x)</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>  p <span class="ot">&lt;-</span> <span class="fu">ncol</span>(x)</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>  distance_matrix <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">0</span>, n, n)</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>n) {</span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (j <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>n) {</span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span>(j<span class="sc">&gt;</span>i){</span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>      </span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>      distance_sum <span class="ot">=</span> <span class="dv">0</span></span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>      <span class="cf">for</span>(h <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>p){</span>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a>        distance <span class="ot">=</span> <span class="fu">d_mallows</span>(x[[i,h]],x[[j,h]])</span>
+<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a>        distance_sum <span class="ot">=</span> distance_sum <span class="sc">+</span> distance</span>
+<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a>      }</span>
+<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a>     distance_matrix[i, j] <span class="ot">&lt;-</span> distance_sum</span>
+<span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb12-24"><a href="#cb12-24" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb12-25"><a href="#cb12-25" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb12-26"><a href="#cb12-26" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb12-27"><a href="#cb12-27" aria-hidden="true" tabindex="-1"></a>  distance_matrix <span class="ot">=</span> distance_matrix <span class="sc">+</span> <span class="fu">t</span>(distance_matrix)</span>
+<span id="cb12-28"><a href="#cb12-28" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb12-29"><a href="#cb12-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(distance_matrix)</span>
+<span id="cb12-30"><a href="#cb12-30" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb12-31"><a href="#cb12-31" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Prueba datos cardiologicos</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>df_cardiological_hist <span class="ot">&lt;-</span> df_cardiological_hist <span class="sc">%&gt;%</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">individuo =</span> <span class="fu">as.character</span>(individuo)) <span class="sc">%&gt;%</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">group_by</span>(individuo) <span class="sc">%&gt;%</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>        <span class="at">pulso_cardiaco =</span> <span class="fu">uniform_histogram</span>(pulso_cardiaco,<span class="at">length_quantiles =</span> <span class="fl">0.1</span>), </span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>        <span class="at">presion_sistolica =</span> <span class="fu">uniform_histogram</span>(presion_sistolica,<span class="at">length_quantiles =</span> <span class="fl">0.1</span>), </span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>        <span class="at">presion_diastolica =</span> <span class="fu">uniform_histogram</span>(presion_diastolica,<span class="at">length_quantiles =</span> <span class="fl">0.1</span>)</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span></span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ungroup</span>()</span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>df_cardiological_hist <span class="ot">=</span> df_cardiological_hist[<span class="sc">-</span><span class="dv">1</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>prueba <span class="ot">=</span> <span class="fu">dist_hist</span>(df_cardiological_hist)</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>dist_obj <span class="ot">=</span> <span class="fu">as.dist</span>(prueba)</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>dist_obj</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>           1         2         3         4         5         6         7
+2   63.80288                                                            
+3  110.56936  67.28841                                                  
+4   77.88340  42.94607  41.16727                                        
+5   16.90241  61.83579 110.02097  76.34051                              
+6  106.54744  60.11187  17.98612  31.10730 104.54828                    
+7  123.88590  64.86656  46.50784  59.97301 121.02494  43.28292          
+8   87.65499  51.33615  34.34329  16.22015  85.22013  21.54437  49.42965
+9  140.87960  77.81202  55.10963  69.39913 138.48029  45.26704  41.55865
+10 116.92857  61.35821  49.85023  47.89724 113.67679  41.86901  50.95002
+11 151.81941  88.57016  61.42769  78.35235 149.23154  53.35144  65.96774
+           8         9        10
+2                               
+3                               
+4                               
+5                               
+6                               
+7                               
+8                               
+9   63.32763                    
+10  34.68242  53.68491          
+11  72.08677  28.13999  56.12164</code></pre>
+</div>
+</div>
+<p>DBSCAN Datos Meteorologicos USA</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>drd964 <span class="ot">=</span> <span class="fu">read.csv2</span>(<span class="st">"drd964_2.csv"</span>,<span class="at">sep =</span> <span class="st">","</span>)</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>drd964<span class="sc">$</span>State <span class="ot">=</span> <span class="fu">as.character</span>(drd964<span class="sc">$</span>State)</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>drd964[, <span class="dv">2</span><span class="sc">:</span><span class="dv">13</span>] <span class="ot">&lt;-</span> <span class="fu">sapply</span>(drd964[, <span class="dv">2</span><span class="sc">:</span><span class="dv">13</span>], as.numeric)</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>States <span class="ot">=</span> drd964 <span class="sc">%&gt;%</span> <span class="fu">distinct</span>(State)</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>drd964_sym <span class="ot">&lt;-</span> <span class="fu">classic.to.sym</span>(</span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">x =</span> drd964,</span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">concept =</span> State,</span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">January =</span> <span class="fu">sym.histogram</span>(January,</span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a>                              <span class="at">breaks =</span> <span class="fu">pretty</span>(drd964<span class="sc">$</span>January, <span class="dv">6</span>)),</span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">February =</span> <span class="fu">sym.histogram</span>(February,</span>
+<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a>                              <span class="at">breaks =</span> <span class="fu">pretty</span>(drd964<span class="sc">$</span>February, <span class="dv">6</span>)),</span>
+<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">March =</span> <span class="fu">sym.histogram</span>(March,</span>
+<span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a>                              <span class="at">breaks =</span> <span class="fu">pretty</span>(drd964<span class="sc">$</span>March, <span class="dv">6</span>)),</span>
+<span id="cb16-17"><a href="#cb16-17" aria-hidden="true" tabindex="-1"></a>  <span class="at">April =</span> <span class="fu">sym.histogram</span>(April,</span>
+<span id="cb16-18"><a href="#cb16-18" aria-hidden="true" tabindex="-1"></a>                              <span class="at">breaks =</span> <span class="fu">pretty</span>(drd964<span class="sc">$</span>April, <span class="dv">6</span>)),</span>
+<span id="cb16-19"><a href="#cb16-19" aria-hidden="true" tabindex="-1"></a>  <span class="at">May =</span> <span class="fu">sym.histogram</span>(May,</span>
+<span id="cb16-20"><a href="#cb16-20" aria-hidden="true" tabindex="-1"></a>                              <span class="at">breaks =</span> <span class="fu">pretty</span>(drd964<span class="sc">$</span>May, <span class="dv">6</span>)),</span>
+<span id="cb16-21"><a href="#cb16-21" aria-hidden="true" tabindex="-1"></a>  <span class="at">June =</span> <span class="fu">sym.histogram</span>(June,</span>
+<span id="cb16-22"><a href="#cb16-22" aria-hidden="true" tabindex="-1"></a>                              <span class="at">breaks =</span> <span class="fu">pretty</span>(drd964<span class="sc">$</span>June, <span class="dv">6</span>)),</span>
+<span id="cb16-23"><a href="#cb16-23" aria-hidden="true" tabindex="-1"></a>  <span class="at">July =</span> <span class="fu">sym.histogram</span>(July,</span>
+<span id="cb16-24"><a href="#cb16-24" aria-hidden="true" tabindex="-1"></a>                              <span class="at">breaks =</span> <span class="fu">pretty</span>(drd964<span class="sc">$</span>July, <span class="dv">6</span>)),</span>
+<span id="cb16-25"><a href="#cb16-25" aria-hidden="true" tabindex="-1"></a>  <span class="at">August =</span> <span class="fu">sym.histogram</span>(August,</span>
+<span id="cb16-26"><a href="#cb16-26" aria-hidden="true" tabindex="-1"></a>                              <span class="at">breaks =</span> <span class="fu">pretty</span>(drd964<span class="sc">$</span>August, <span class="dv">6</span>)),</span>
+<span id="cb16-27"><a href="#cb16-27" aria-hidden="true" tabindex="-1"></a>  <span class="at">September =</span> <span class="fu">sym.histogram</span>(September,</span>
+<span id="cb16-28"><a href="#cb16-28" aria-hidden="true" tabindex="-1"></a>                              <span class="at">breaks =</span> <span class="fu">pretty</span>(drd964<span class="sc">$</span>September, <span class="dv">6</span>)),</span>
+<span id="cb16-29"><a href="#cb16-29" aria-hidden="true" tabindex="-1"></a>  <span class="at">October =</span> <span class="fu">sym.histogram</span>(October,</span>
+<span id="cb16-30"><a href="#cb16-30" aria-hidden="true" tabindex="-1"></a>                              <span class="at">breaks =</span> <span class="fu">pretty</span>(drd964<span class="sc">$</span>October, <span class="dv">6</span>)),</span>
+<span id="cb16-31"><a href="#cb16-31" aria-hidden="true" tabindex="-1"></a>  <span class="at">November =</span> <span class="fu">sym.histogram</span>(November,</span>
+<span id="cb16-32"><a href="#cb16-32" aria-hidden="true" tabindex="-1"></a>                              <span class="at">breaks =</span> <span class="fu">pretty</span>(drd964<span class="sc">$</span>November, <span class="dv">6</span>)),</span>
+<span id="cb16-33"><a href="#cb16-33" aria-hidden="true" tabindex="-1"></a>  <span class="at">December =</span> <span class="fu">sym.histogram</span>(December,</span>
+<span id="cb16-34"><a href="#cb16-34" aria-hidden="true" tabindex="-1"></a>                              <span class="at">breaks =</span> <span class="fu">pretty</span>(drd964<span class="sc">$</span>December, <span class="dv">6</span>))</span>
+<span id="cb16-35"><a href="#cb16-35" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb16-36"><a href="#cb16-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-37"><a href="#cb16-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-38"><a href="#cb16-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-39"><a href="#cb16-39" aria-hidden="true" tabindex="-1"></a>States2 <span class="ot">=</span> <span class="fu">attr</span>(drd964_sym,<span class="st">"concept"</span>)</span>
+<span id="cb16-40"><a href="#cb16-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-41"><a href="#cb16-41" aria-hidden="true" tabindex="-1"></a>drd964_sym_state <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(States2,drd964_sym)</span>
+<span id="cb16-42"><a href="#cb16-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-43"><a href="#cb16-43" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(drd964_sym[<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>,<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="DBSCAN_Clust---V2_files/figure-html/unnamed-chunk-8-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Uniformar histogramas</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>drd964_sym_state <span class="ot">&lt;-</span> drd964_sym_state <span class="sc">%&gt;%</span></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">States2 =</span> <span class="fu">as.character</span>(States2)) <span class="sc">%&gt;%</span></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">group_by</span>(States2) <span class="sc">%&gt;%</span><span class="fu">mutate</span>(</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>        <span class="at">January =</span> <span class="fu">uniform_histogram</span>(January,<span class="at">length_quantiles =</span> <span class="fl">0.1</span>), </span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>        <span class="at">February =</span> <span class="fu">uniform_histogram</span>(February,<span class="at">length_quantiles =</span> <span class="fl">0.1</span>), </span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>        <span class="at">March =</span> <span class="fu">uniform_histogram</span>(March,<span class="at">length_quantiles =</span> <span class="fl">0.1</span>),</span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>        <span class="at">April =</span> <span class="fu">uniform_histogram</span>(April,<span class="at">length_quantiles =</span> <span class="fl">0.1</span>),</span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>        <span class="at">May =</span> <span class="fu">uniform_histogram</span>(May,<span class="at">length_quantiles =</span> <span class="fl">0.1</span>),</span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>        <span class="at">June =</span> <span class="fu">uniform_histogram</span>(June,<span class="at">length_quantiles =</span> <span class="fl">0.1</span>),</span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a>        <span class="at">July =</span> <span class="fu">uniform_histogram</span>(July,<span class="at">length_quantiles =</span> <span class="fl">0.1</span>),</span>
+<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a>        <span class="at">August =</span> <span class="fu">uniform_histogram</span>(August,<span class="at">length_quantiles =</span> <span class="fl">0.1</span>),</span>
+<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a>        <span class="at">September =</span> <span class="fu">uniform_histogram</span>(September,<span class="at">length_quantiles =</span> <span class="fl">0.1</span>),</span>
+<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a>        <span class="at">October =</span> <span class="fu">uniform_histogram</span>(October,<span class="at">length_quantiles =</span> <span class="fl">0.1</span>),</span>
+<span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a>        <span class="at">November =</span> <span class="fu">uniform_histogram</span>(November,<span class="at">length_quantiles =</span> <span class="fl">0.1</span>),</span>
+<span id="cb17-16"><a href="#cb17-16" aria-hidden="true" tabindex="-1"></a>        <span class="at">December =</span> <span class="fu">uniform_histogram</span>(December,<span class="at">length_quantiles =</span> <span class="fl">0.1</span>)</span>
+<span id="cb17-17"><a href="#cb17-17" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span> <span class="fu">ungroup</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>DBSCAN utilizando matriz de distancias de Mallows</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Estimación de matriz de distancias de histogramas y dbscan</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>drd964_sym_state <span class="ot">=</span> drd964_sym_state[<span class="sc">-</span><span class="dv">1</span>]</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>drd964_dist <span class="ot">=</span> <span class="fu">dist_hist</span>(drd964_sym_state)</span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>drd964_dist <span class="ot">=</span> <span class="fu">as.dist</span>(drd964_dist)</span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a>meteo_dbscan <span class="ot">=</span> fpc<span class="sc">::</span><span class="fu">dbscan</span>(drd964_dist,<span class="at">eps=</span><span class="dv">35</span>,<span class="at">MinPts =</span> <span class="dv">5</span>,<span class="at">method=</span><span class="st">"dist"</span>)</span>
+<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a>meteo_dbscan</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>dbscan Pts=48 MinPts=5 eps=35
+       0 1  2  3
+border 8 0  5  3
+seed   0 5  9 18
+total  8 5 14 21</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>clusters_meteo <span class="ot">=</span> <span class="fu">data.frame</span>(States2,meteo_dbscan<span class="sc">$</span>cluster)</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a><span class="fu">write.csv</span>(clusters_meteo,<span class="st">"clusters_meteo3_2.csv"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="datos-climáticos-china" class="level2">
+<h2 class="anchored" data-anchor-id="datos-climáticos-china">Datos Climáticos China</h2>
+<p>Carga de datos y tratamiento inicial</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>ndp039 <span class="ot">&lt;-</span> <span class="fu">read_table</span>(<span class="st">"ndp039.f14.txt"</span>, </span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>    <span class="at">col_names =</span> <span class="cn">FALSE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>
+-- Column specification --------------------------------------------------------
+cols(
+  X1 = col_double(),
+  X2 = col_double(),
+  X3 = col_double(),
+  X4 = col_character(),
+  X5 = col_double(),
+  X6 = col_double(),
+  X7 = col_double(),
+  X8 = col_double(),
+  X9 = col_double(),
+  X10 = col_character(),
+  X11 = col_character(),
+  X12 = col_double(),
+  X13 = col_double(),
+  X14 = col_double(),
+  X15 = col_double(),
+  X16 = col_double(),
+  X17 = col_double(),
+  X18 = col_double()
+)</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>ndp039 <span class="ot">=</span> ndp039[,<span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">3</span>,<span class="dv">4</span>,<span class="dv">5</span>,<span class="dv">8</span>,<span class="dv">11</span>,<span class="dv">14</span>)]</span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>ndp039_Jan <span class="ot">=</span> ndp039 <span class="sc">%&gt;%</span> <span class="fu">filter</span>(X3 <span class="sc">==</span> <span class="dv">1</span>)</span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>ndp039_Jul <span class="ot">=</span> ndp039 <span class="sc">%&gt;%</span> <span class="fu">filter</span>(X3 <span class="sc">==</span> <span class="dv">7</span>)</span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>ndp039_Jan <span class="ot">=</span> ndp039_Jan[<span class="sc">-</span><span class="dv">2</span>]</span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>ndp039_Jul <span class="ot">=</span> ndp039_Jul[<span class="sc">-</span><span class="dv">2</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>ndp039_Jan<span class="sc">$</span>X1 <span class="ot">=</span> <span class="fu">as.character</span>(ndp039_Jan<span class="sc">$</span>X1)</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>ndp039_Jan[, <span class="dv">2</span><span class="sc">:</span><span class="dv">6</span>] <span class="ot">&lt;-</span> <span class="fu">sapply</span>(ndp039_Jan[, <span class="dv">2</span><span class="sc">:</span><span class="dv">6</span>], as.numeric)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in lapply(X = X, FUN = FUN, ...): NAs introduced by coercion
+
+Warning in lapply(X = X, FUN = FUN, ...): NAs introduced by coercion</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>ndp039_Jul<span class="sc">$</span>X1 <span class="ot">=</span> <span class="fu">as.character</span>(ndp039_Jul<span class="sc">$</span>X1)</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>ndp039_Jul[, <span class="dv">2</span><span class="sc">:</span><span class="dv">6</span>] <span class="ot">&lt;-</span> <span class="fu">sapply</span>(ndp039_Jul[, <span class="dv">2</span><span class="sc">:</span><span class="dv">6</span>], as.numeric)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in lapply(X = X, FUN = FUN, ...): NAs introduced by coercion
+
+Warning in lapply(X = X, FUN = FUN, ...): NAs introduced by coercion</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>ndp039_Jan <span class="ot">=</span> <span class="fu">na.omit</span>(ndp039_Jan)</span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>ndp039_Jul <span class="ot">=</span> <span class="fu">na.omit</span>(ndp039_Jul)</span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a><span class="co">#transformación a objeto simbólico</span></span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a>ndp039_Jan_sym <span class="ot">&lt;-</span> <span class="fu">classic.to.sym</span>(</span>
+<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">x =</span> ndp039_Jan,</span>
+<span id="cb28-8"><a href="#cb28-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">concept =</span> X1,</span>
+<span id="cb28-9"><a href="#cb28-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">X4 =</span> <span class="fu">sym.histogram</span>(X4,</span>
+<span id="cb28-10"><a href="#cb28-10" aria-hidden="true" tabindex="-1"></a>                              <span class="at">breaks =</span> <span class="fu">pretty</span>(ndp039_Jan<span class="sc">$</span>X4, <span class="dv">4</span>)),</span>
+<span id="cb28-11"><a href="#cb28-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">X5 =</span> <span class="fu">sym.histogram</span>(X5,</span>
+<span id="cb28-12"><a href="#cb28-12" aria-hidden="true" tabindex="-1"></a>                              <span class="at">breaks =</span> <span class="fu">pretty</span>(ndp039_Jan<span class="sc">$</span>X5, <span class="dv">4</span>)),</span>
+<span id="cb28-13"><a href="#cb28-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">X8 =</span> <span class="fu">sym.histogram</span>(X8,</span>
+<span id="cb28-14"><a href="#cb28-14" aria-hidden="true" tabindex="-1"></a>                              <span class="at">breaks =</span> <span class="fu">pretty</span>(ndp039_Jan<span class="sc">$</span>X8, <span class="dv">4</span>)),</span>
+<span id="cb28-15"><a href="#cb28-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">X11 =</span> <span class="fu">sym.histogram</span>(X11,</span>
+<span id="cb28-16"><a href="#cb28-16" aria-hidden="true" tabindex="-1"></a>                              <span class="at">breaks =</span> <span class="fu">pretty</span>(ndp039_Jan<span class="sc">$</span>X11, <span class="dv">4</span>)),</span>
+<span id="cb28-17"><a href="#cb28-17" aria-hidden="true" tabindex="-1"></a>  <span class="at">X14 =</span> <span class="fu">sym.histogram</span>(X14,</span>
+<span id="cb28-18"><a href="#cb28-18" aria-hidden="true" tabindex="-1"></a>                              <span class="at">breaks =</span> <span class="fu">pretty</span>(ndp039_Jan<span class="sc">$</span>X14, <span class="dv">4</span>))</span>
+<span id="cb28-19"><a href="#cb28-19" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb28-20"><a href="#cb28-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-21"><a href="#cb28-21" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(ndp039_Jan_sym[<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>,])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="DBSCAN_Clust---V2_files/figure-html/unnamed-chunk-12-1.png" class="img-fluid" width="672"></p>
+</div>
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>ndp039_Jul_sym <span class="ot">&lt;-</span> <span class="fu">classic.to.sym</span>(</span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">x =</span> ndp039_Jul,</span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">concept =</span> X1,</span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">X4 =</span> <span class="fu">sym.histogram</span>(X4,</span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>                              <span class="at">breaks =</span> <span class="fu">pretty</span>(ndp039_Jul<span class="sc">$</span>X4, <span class="dv">4</span>)),</span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">X5 =</span> <span class="fu">sym.histogram</span>(X5,</span>
+<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a>                              <span class="at">breaks =</span> <span class="fu">pretty</span>(ndp039_Jul<span class="sc">$</span>X5, <span class="dv">4</span>)),</span>
+<span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">X8 =</span> <span class="fu">sym.histogram</span>(X8,</span>
+<span id="cb29-9"><a href="#cb29-9" aria-hidden="true" tabindex="-1"></a>                              <span class="at">breaks =</span> <span class="fu">pretty</span>(ndp039_Jul<span class="sc">$</span>X8, <span class="dv">4</span>)),</span>
+<span id="cb29-10"><a href="#cb29-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">X11 =</span> <span class="fu">sym.histogram</span>(X11,</span>
+<span id="cb29-11"><a href="#cb29-11" aria-hidden="true" tabindex="-1"></a>                              <span class="at">breaks =</span> <span class="fu">pretty</span>(ndp039_Jul<span class="sc">$</span>X11, <span class="dv">4</span>)),</span>
+<span id="cb29-12"><a href="#cb29-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">X14 =</span> <span class="fu">sym.histogram</span>(X14,</span>
+<span id="cb29-13"><a href="#cb29-13" aria-hidden="true" tabindex="-1"></a>                              <span class="at">breaks =</span> <span class="fu">pretty</span>(ndp039_Jul<span class="sc">$</span>X14, <span class="dv">4</span>))</span>
+<span id="cb29-14"><a href="#cb29-14" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb29-15"><a href="#cb29-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-16"><a href="#cb29-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-17"><a href="#cb29-17" aria-hidden="true" tabindex="-1"></a>ndp039_sym <span class="ot">=</span> <span class="fu">data.frame</span>(ndp039_Jan_sym,ndp039_Jul_sym)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>Stations <span class="ot">=</span> <span class="fu">attr</span>(ndp039_Jul_sym,<span class="st">"concept"</span>)</span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>ndp039_sym_stations <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(Stations,ndp039_sym)</span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a><span class="co">#uniformar los histogramas</span></span>
+<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a>ndp039_sym_stations <span class="ot">&lt;-</span> ndp039_sym_stations <span class="sc">%&gt;%</span></span>
+<span id="cb30-8"><a href="#cb30-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">Stations =</span> <span class="fu">as.character</span>(Stations)) <span class="sc">%&gt;%</span></span>
+<span id="cb30-9"><a href="#cb30-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">group_by</span>(Stations) <span class="sc">%&gt;%</span><span class="fu">mutate</span>(</span>
+<span id="cb30-10"><a href="#cb30-10" aria-hidden="true" tabindex="-1"></a>        <span class="at">X4 =</span> <span class="fu">uniform_histogram</span>(X4,<span class="at">length_quantiles =</span> <span class="fl">0.1</span>), </span>
+<span id="cb30-11"><a href="#cb30-11" aria-hidden="true" tabindex="-1"></a>        <span class="at">X5 =</span> <span class="fu">uniform_histogram</span>(X5,<span class="at">length_quantiles =</span> <span class="fl">0.1</span>), </span>
+<span id="cb30-12"><a href="#cb30-12" aria-hidden="true" tabindex="-1"></a>        <span class="at">X8 =</span> <span class="fu">uniform_histogram</span>(X8,<span class="at">length_quantiles =</span> <span class="fl">0.1</span>),</span>
+<span id="cb30-13"><a href="#cb30-13" aria-hidden="true" tabindex="-1"></a>        <span class="at">X11 =</span> <span class="fu">uniform_histogram</span>(X11,<span class="at">length_quantiles =</span> <span class="fl">0.1</span>),</span>
+<span id="cb30-14"><a href="#cb30-14" aria-hidden="true" tabindex="-1"></a>        <span class="at">X14 =</span> <span class="fu">uniform_histogram</span>(X14,<span class="at">length_quantiles =</span> <span class="fl">0.1</span>),</span>
+<span id="cb30-15"><a href="#cb30-15" aria-hidden="true" tabindex="-1"></a>        <span class="at">X4.1 =</span> <span class="fu">uniform_histogram</span>(X4<span class="fl">.1</span>,<span class="at">length_quantiles =</span> <span class="fl">0.1</span>),</span>
+<span id="cb30-16"><a href="#cb30-16" aria-hidden="true" tabindex="-1"></a>        <span class="at">X5.1 =</span> <span class="fu">uniform_histogram</span>(X5<span class="fl">.1</span>,<span class="at">length_quantiles =</span> <span class="fl">0.1</span>),</span>
+<span id="cb30-17"><a href="#cb30-17" aria-hidden="true" tabindex="-1"></a>        <span class="at">X8.1 =</span> <span class="fu">uniform_histogram</span>(X8<span class="fl">.1</span>,<span class="at">length_quantiles =</span> <span class="fl">0.1</span>),</span>
+<span id="cb30-18"><a href="#cb30-18" aria-hidden="true" tabindex="-1"></a>        <span class="at">X11.1 =</span> <span class="fu">uniform_histogram</span>(X11<span class="fl">.1</span>,<span class="at">length_quantiles =</span> <span class="fl">0.1</span>),</span>
+<span id="cb30-19"><a href="#cb30-19" aria-hidden="true" tabindex="-1"></a>        <span class="at">X14.1 =</span> <span class="fu">uniform_histogram</span>(X14<span class="fl">.1</span>,<span class="at">length_quantiles =</span> <span class="fl">0.1</span>)</span>
+<span id="cb30-20"><a href="#cb30-20" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span> <span class="fu">ungroup</span>()</span>
+<span id="cb30-21"><a href="#cb30-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-22"><a href="#cb30-22" aria-hidden="true" tabindex="-1"></a>ndp039_sym_stations <span class="ot">=</span> ndp039_sym_stations[<span class="sc">-</span><span class="dv">1</span>]</span>
+<span id="cb30-23"><a href="#cb30-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-24"><a href="#cb30-24" aria-hidden="true" tabindex="-1"></a><span class="co">#estimación de matriz de distancias</span></span>
+<span id="cb30-25"><a href="#cb30-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-26"><a href="#cb30-26" aria-hidden="true" tabindex="-1"></a>ndp039_dist <span class="ot">=</span> <span class="fu">dist_hist</span>(ndp039_sym_stations)</span>
+<span id="cb30-27"><a href="#cb30-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-28"><a href="#cb30-28" aria-hidden="true" tabindex="-1"></a>ndp039_dist <span class="ot">=</span> <span class="fu">as.dist</span>(ndp039_dist)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>DBSCAN usando la matriz de distancias de Mallows</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>clima_dbscan <span class="ot">=</span> fpc<span class="sc">::</span><span class="fu">dbscan</span>(ndp039_dist,<span class="at">eps=</span><span class="dv">17000</span>,<span class="at">MinPts =</span> <span class="dv">14</span>,<span class="at">method=</span><span class="st">"dist"</span>)</span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>clima_dbscan</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>dbscan Pts=60 MinPts=14 eps=17000
+        0  1  2
+border 24 10 13
+seed    0  9  4
+total  24 19 17</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>clusters_clima <span class="ot">=</span> <span class="fu">data.frame</span>(Stations,clima_dbscan<span class="sc">$</span>cluster)</span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a><span class="fu">write.csv</span>(clusters_clima,<span class="st">"clusters_clima2.csv"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+</body></html>
